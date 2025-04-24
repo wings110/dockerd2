@@ -1,4 +1,4 @@
-name: Build Docker for Android
+name: Sync Docker Version
 
 on:
   workflow_dispatch:
