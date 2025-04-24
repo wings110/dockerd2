@@ -44,15 +44,6 @@ jobs:
         sed -i "s/^version=.*/version=${versionString}/" module.prop
         sed -i "s/^versionCode=.*/versionCode=$newVersionCode/" module.prop
 
-        # Estimate the zip url location
-        zipUrl="https://github.com/mgksu/dockerd/releases/download/$versionString/Magisk-Dockerd-$versionString.zip"
-
-        # Update update.json
-        jq '.version = $newVersion | .versionCode = $newVersionCode | .zipUrl = $newZipUrl' \
-          --arg newVersion "${versionString}" \
-          --arg newVersionCode "$newVersionCode" \
-          --arg newZipUrl "$zipUrl" \
-          update.json > temp.json && mv temp.json update.json
         git add .
 
     - name: Commit and push
@@ -69,7 +60,7 @@ jobs:
     - name: Create Module
       run: |
         cd module
-        zip -9 -r "$GITHUB_WORKSPACE/Magisk-Dockerd-${{ env.GITHUB_REF }}}.zip"  -x "*.json"
+        zip -9 -r "$GITHUB_WORKSPACE/Magisk-Dockerd-${{ env.GITHUB_REF }}}.zip" ./
 
     - name: Create Release
       id: create_release
