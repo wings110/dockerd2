@@ -208,8 +208,6 @@ create_archive() {
 postprocess() {
     sed -i "s|\\\$PREFIX|$STRIP_PATH|g" "$STAGING_DIR$STRIP_PATH/etc/containerd/config.toml"
     rm -f "$STAGING_DIR$STRIP_PATH/bin/dockerd"
-    cp $GITHUB_WORKSPACE/bin/tini "$STAGING_DIR$STRIP_PATH/bin/tini"
-    cp $GITHUB_WORKSPACE/bin/tini "$STAGING_DIR$STRIP_PATH/bin/docker-init"
 }
 
 main() {
