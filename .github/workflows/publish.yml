@@ -48,7 +48,7 @@ jobs:
     - name: Create Module
       run: |
         cd module
-        zip -9 -r "$GITHUB_WORKSPACE/Magisk-Dockerd-${{ env.GITHUB_REF }}}.zip" ./
+        zip -9 -r "$GITHUB_WORKSPACE/Magisk-Dockerd-${{ env.GITHUB_REF }}.zip" ./
 
     - name: Create Release
       id: create_release
@@ -60,7 +60,7 @@ jobs:
         generate_release_notes: true
         make_latest: true
         files: |
-          ./Magisk-Dockerd-${{ env.GITHUB_REF }}}.zip
-        name: Dockerd ${{ env.GITHUB_REF }}}
+          ./Magisk-Dockerd-${{ env.GITHUB_REF }}.zip
+        name: Dockerd ${{ env.GITHUB_REF }}
         tag_name: ${{ env.GITHUB_REF }}
 
