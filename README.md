@@ -3,7 +3,6 @@
 This repository contains a Magisk and KernelSU module for running Docker on rooted Android devices.
 
 ## Prerequisites
-- Android 11 or higher
 - Magisk or KernelSU installed
 - Docker Patched kernel [See More](https://gist.github.com/FreddieOliveira/efe850df7ff3951cb62d74bd770dce27)
 
