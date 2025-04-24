@@ -1,0 +1,171 @@
+#!/system/bin/sh
+DIR=${0%/*}
+source $DIR/../settings.ini
+scripts_name=$(basename $0)
+
+mountcgroups(){
+  export PATH="${PATH}:/system/xbin:/system/bin"
+  opts='rw,nosuid,nodev,noexec,relatime'
+  cgroups='blkio cpu cpuacct cpuset devices freezer memory pids schedtune'
+  
+  if ! mountpoint -q /sys/fs/cgroup 2>/dev/null; then
+    mkdir -p /sys/fs/cgroup
+    mount -t tmpfs -o "${opts}" cgroup_root /sys/fs/cgroup || exit 1
+  fi
+  
+  if ! mountpoint -q /sys/fs/cgroup/cg2_bpf 2>/dev/null; then
+    mkdir -p /sys/fs/cgroup/cg2_bpf
+    mount -t cgroup2 -o "${opts}" cgroup2_root /sys/fs/cgroup/cg2_bpf
+  fi
+  
+  for cg in ${cgroups}; do
+    if ! mountpoint -q "/sys/fs/cgroup/${cg}" 2>/dev/null; then
+      mkdir -p "/sys/fs/cgroup/${cg}"
+      mount -t cgroup -o "${opts},${cg}" "${cg}" "/sys/fs/cgroup/${cg}" \
+      || rmdir "/sys/fs/cgroup/${cg}"
+    fi
+  done
+  export LD_LIBRARY_PATH="${docker_dir}/lib:$LD_LIBRARY_PATH"
+
+}
+
+set_gateway_ip() {
+    local target_dev=$1
+    local gateway_ip=""
+    local route_info=""
+
+    route_info=$(ip route get 8.8.8.8 oif "$target_dev" 2>/dev/null)
+    gateway_ip=$(echo "$route_info" | awk '{for(i=1;i<=NF;i++) if($i=="via") {print $(i+1); exit}}')
+    if [ -z "$gateway_ip" ]; then
+      return 1
+    else
+      log Info "found gateway ip : $gateway_ip"
+      ip route add default via "$gateway_ip" dev "$target_dev"
+      ip rule add from all lookup main pref 30000
+      ip rule add pref 1 from all lookup main  
+      ip rule add pref 2 from all lookup default
+    fi
+    return 0
+}
+
+start_dockerd() {
+  sed -Ei "s/^description=(\[.*][[:space:]]*)?/description=[ ⏲ $current_time | ✔ dockerd service is running!!! ] /g" "$module_prop"
+  PID=$(busybox pidof "${dockerd_bin}")
+  if [ -n "$PID" ]; then
+    log Info "✔ dockerd service running with PID : ( $PID )."
+    return
+  fi
+  mountcgroups
+  set_gateway_ip wlan0
+  if [ $? -ne 0 ]; then
+    log Error "✘ Failed to set up gateway for wlan0."
+  fi
+  # The logs time cannot set to current timezone, default is UTC.
+  nohup ${dockerd_bin} > "${dockerd_log}" 2>&1 &
+  PID=$!
+  echo -n $PID > "${dockerd_pid}"
+  log Info "✔ dockerd service running with PID : ( $PID )."
+}
+
+stop_dockerd(){
+  sed -Ei "s/^description=(\[.*][[:space:]]*)?/description=[ ⏲ $current_time | ✘ dockerd shutting down, service is stopped !!! ] /g" "$module_prop"
+  # Check if the binary is running using pgrep
+  if busybox pgrep "${dockerd_bin}" >/dev/null; then
+    # Use `busybox pkill` to kill the binary with signal 15, otherwise use `killall`.
+    if busybox pkill -15 -e "${dockerd_bin}" >/dev/null 2>&1; then
+      : # Do nothing if busybox pkill is successful
+    else
+      killall -15 "${dockerd_bin}" >/dev/null 2>&1 || kill -15 "$(busybox pidof "${dockerd_bin}")" >/dev/null 2>&1
+    fi
+  else
+    log Info "✘ dockerd service already stop."
+    rm -f "${dockerd_pid}"
+    [ -t 1 ] && echo -e "${white}--------------------------------------------${normal}"
+    return
+  fi
+  # Check if the binary has stopped
+  sleep 0.5
+  if ! busybox pidof "${dockerd_bin}" >/dev/null 2>&1; then
+    # Delete the `dockerd.pid` file if it exists
+    rm -f "${dockerd_pid}"
+    log Info "✘ dockerd shutting down, service is stopped."
+    log Info "✘ dockerd disconnected."
+    [ -t 1 ] && echo -e "${white}--------------------------------------------${normal}"
+  else
+    log Warning "⚠️ dockerd Not stopped; may still be shutting down or failed to shut down."
+    force_stop
+  fi
+
+  
+}
+force_stop() {
+  # try forcing it to shut down.
+  log Warning "⚠️ try forcing it to shut down."
+  # Use `busybox pkill` to kill the binary with signal 9, otherwise use `killall`.
+  if busybox pkill -9 "${dockerd_bin}"; then
+    : # Do nothing if busybox pkill is successful
+  else
+    if command -v killall >/dev/null 2>&1; then
+      killall -9 "${dockerd_bin}" >/dev/null 2>&1 || true
+    else
+      pkill -9 "${dockerd_bin}" >/dev/null 2>&1 || true
+    fi
+  fi
+  sleep 0.5
+  if ! busybox pidof "${dockerd_bin}" >/dev/null 2>&1; then
+    log Info "✔ done, you can sleep peacefully."
+    [ -t 1 ] && echo -e "${white}--------------------------------------------${normal}"
+    rm -f "${dockerd_pid}"
+  fi
+}
+log_view(){
+  case "$1" in
+    runs)
+      busybox less -F~ "${dockerd_runs_log}"
+      ;;
+    service)
+      busybox less -F~ "${dockerd_service_log}"
+      ;;
+    dockerd)
+      busybox tail -q -n +1 -F "${dockerd_log}"
+      ;;
+    *)
+      if [ -n "$1" ]; then
+        echo "${red}${scripts_name} log $1 not found${normal}"
+      fi
+      echo "${yellow}usage${normal}: ${green}${scripts_name}${normal} ${yellow}log${normal} {${orange}runs|service|dockerd${normal}}"
+      ;;
+  esac
+  
+}
+case "$1" in
+  start)
+    start_dockerd
+    ;;
+  stop)
+    stop_dockerd
+    ;;
+  restart)
+    stop_dockerd
+    sleep 0.5
+    start_dockerd
+    ;;
+  status)
+    # Check whether the service is running or not
+    PID=$(busybox pidof "${dockerd_bin}")
+    if [ -n "$PID" ]; then
+      log Info "✔ dockerd service is running with PID : ( $PID )."
+    else
+      log Info "✘ dockerd service is stopped."
+    fi
+    ;;
+  log)
+    log_view $2
+    ;;
+  *)
+    if [ -n "$1" ]; then
+      echo "${red}${scripts_name} $1 not found${normal}"
+    fi
+    echo "${yellow}usage${normal}: ${green}${scripts_name}${normal} {${yellow}start|stop|restart|status|log${normal}{${orange}runs|service|dockerd${normal}${yellow}}${normal}}"
+    ;;
+esac
