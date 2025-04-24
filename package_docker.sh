@@ -177,6 +177,7 @@ EOF
     make -j$(nproc)
     make install
     
+    mkdir -p $STAGING_DIR$STRIP_PATH/bin
     cp $PREFIX/bin/tini $STAGING_DIR$STRIP_PATH/bin/docker-init
     cp $PREFIX/bin/tini $STAGING_DIR$STRIP_PATH/bin/tiny
 }
