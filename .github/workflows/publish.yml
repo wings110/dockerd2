@@ -33,30 +33,18 @@ jobs:
         bash $GITHUB_WORKSPACE/package_docker.sh
         mv docker.tar.xz $GITHUB_WORKSPACE/module/docker.tar.xz
     
-    - name: Update repository
+    - name: Update module.prop
       run: |
         # Store the version info to environment variables
         versionString="${{ env.GITHUB_REF }}"
 
         IFS='.' read -ra VERSION_PARTS <<< "${versionString//[^0-9.]/}" # Get numeric version parts
-        newVersionCode=$(printf "%02d%02d%02d%02d" "${VERSION_PARTS[0]}" "${VERSION_PARTS[1]}" "${VERSION_PARTS[2]}" "${VERSION_PARTS[3]}") # Get version code number
+        newVersionCode=$(printf "%02d%02d%02d%02d" "${VERSION_PARTS[0]}" "${VERSION_PARTS[1]}" "${VERSION_PARTS[2]}" "${VERSION_PARTS[3]}")
 
         # Update module.prop
-        sed -i "s/^version=.*/version=${versionString}/" module.prop
-        sed -i "s/^versionCode=.*/versionCode=$newVersionCode/" module.prop
-        git add .
+        sed -i "s/^version=.*/version=${versionString}/" $GITHUB_WORKSPACE/module/module.prop
+        sed -i "s/^versionCode=.*/versionCode=$newVersionCode/" $GITHUB_WORKSPACE/module/module.prop
 
-    - name: Commit and push
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        if git diff --staged --quiet; then
-          echo "No changes to commit"
-        else
-          git commit -m "Updated to ${{ env.GITHUB_REF }}"
-          git push
-        fi
-  
     - name: Create Module
       run: |
         cd module
