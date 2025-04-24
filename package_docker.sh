@@ -23,6 +23,8 @@ PACKAGES=(
     "ncurses"
 )
 
+dir=$(pwd)
+
 # Setup logging
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
@@ -55,7 +57,7 @@ find_package_files() {
 extract_packages() {
     log "Creating temporary directories"
     mkdir -p "$STAGING_DIR"
-
+    
     log "Beginning extraction and processing of packages..."
 
     for package in "${PACKAGES[@]}"; do
@@ -177,9 +179,9 @@ EOF
     make -j$(nproc)
     make install
     
-    mkdir -p $STAGING_DIR$STRIP_PATH/bin
-    cp $PREFIX/bin/tini $STAGING_DIR$STRIP_PATH/bin/docker-init
-    cp $PREFIX/bin/tini $STAGING_DIR$STRIP_PATH/bin/tiny
+    cd $dir
+    cp $PREFIX/bin/tini $dir/$STAGING_DIR$STRIP_PATH/bin/docker-init
+    cp $PREFIX/bin/tini $dir/$STAGING_DIR$STRIP_PATH/bin/tini
 }
 
 create_archive() {
@@ -219,9 +221,7 @@ main() {
     postprocess
     build_tiny
     create_archive
-
     log "All operations completed successfully"
-    cleanup
 }
 
 main
