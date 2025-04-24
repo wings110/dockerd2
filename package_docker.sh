@@ -20,6 +20,7 @@ PACKAGES=(
     "libaio" 
     "lvm2"
     "readline"
+    "ncurses"
 )
 
 # Setup logging
