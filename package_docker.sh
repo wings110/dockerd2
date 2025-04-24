@@ -57,7 +57,7 @@ find_package_files() {
 extract_packages() {
     log "Creating temporary directories"
     mkdir -p "$STAGING_DIR"
-    
+
     log "Beginning extraction and processing of packages..."
 
     for package in "${PACKAGES[@]}"; do
@@ -211,6 +211,8 @@ create_archive() {
 postprocess() {
     sed -i "s|\\\$PREFIX|$STRIP_PATH|g" "$STAGING_DIR$STRIP_PATH/etc/containerd/config.toml"
     rm -f "$STAGING_DIR$STRIP_PATH/bin/dockerd"
+    rm -rf "$STAGING_DIR$STRIP_PATH/share/man"
+    rm -rf "$STAGING_DIR$STRIP_PATH/share/doc"
 }
 
 main() {
@@ -225,5 +227,4 @@ main() {
 }
 
 main
-
 exit 0
