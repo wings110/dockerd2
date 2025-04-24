@@ -35,20 +35,14 @@ jobs:
     
     - name: Update module.prop
       run: |
-        # Store the version info to environment variables
-        versionString="${{ env.GITHUB_REF }}"
-
-        IFS='.' read -ra VERSION_PARTS <<< "${versionString//[^0-9.]/}" # Get numeric version parts
-        newVersionCode=$(printf "%02d%02d%02d%02d" "${VERSION_PARTS[0]}" "${VERSION_PARTS[1]}" "${VERSION_PARTS[2]}" "${VERSION_PARTS[3]}")
-
-        # Update module.prop
-        sed -i "s/^version=.*/version=${versionString}/" $GITHUB_WORKSPACE/module/module.prop
-        sed -i "s/^versionCode=.*/versionCode=$newVersionCode/" $GITHUB_WORKSPACE/module/module.prop
+        TAG="${{ github.ref_name }}"
+        VERSION=${TAG#v}
+        sed -i "s/^version=.*/version=${VERSION}/" $GITHUB_WORKSPACE/module/module.prop
 
     - name: Create Module
       run: |
         cd module
-        zip -9 -r "$GITHUB_WORKSPACE/Magisk-Dockerd-${{ env.GITHUB_REF }}.zip" ./
+        zip -9 -r "$GITHUB_WORKSPACE/Magisk-Dockerd-${{ github.ref_name }}.zip" ./
 
     - name: Create Release
       id: create_release
@@ -60,7 +54,7 @@ jobs:
         generate_release_notes: true
         make_latest: true
         files: |
-          ./Magisk-Dockerd-${{ env.GITHUB_REF }}.zip
-        name: Dockerd ${{ env.GITHUB_REF }}
-        tag_name: ${{ env.GITHUB_REF }}
+          ./Magisk-Dockerd-${{ github.ref_name }}.zip
+        name: ${{ github.ref_name }}
+        tag_name: ${{ github.ref_name }}
 

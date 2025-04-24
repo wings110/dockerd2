@@ -2,5 +2,4 @@ id=dockerd
 name=Docker for Android
 author=divyam234
 description=Docker Android
-version=1.82.5.0
-versionCode=01820500
+version=1.0.0
