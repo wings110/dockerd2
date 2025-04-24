@@ -14,6 +14,12 @@ SERVICE_DIR="/data/adb/service.d"
 
 CUSTOM_DIR="/data/adb/docker"
 
+#Stop any running dockerd service
+if [ -f "$CUSTOM_DIR/scripts/dockerd.service" ]; then
+  ui_print "- Stopping dockerd service"
+  "$CUSTOM_DIR/scripts/dockerd.service" stop 2>&1 > /dev/null
+fi
+
 ui_print "- Creating directories"
 
 mkdir -p "$CUSTOM_DIR" "$SERVICE_DIR"
