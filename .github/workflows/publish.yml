@@ -28,7 +28,7 @@ jobs:
       run: |
         cd termux-packages
         patch -p1 < ../docker.patch
-        ./scripts/run-docker.sh ./build-package.sh docker
+        ./scripts/run-docker.sh ./build-package.sh docker docker-compose
         cd output
         bash $GITHUB_WORKSPACE/package_docker.sh
         mv docker.tar.xz $GITHUB_WORKSPACE/module/docker.tar.xz
