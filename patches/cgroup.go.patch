@@ -1,0 +1,116 @@
+diff --git a/moby/pkg/sysinfo/sysinfo_linux.go b/moby/pkg/sysinfo/sysinfo_linux.go
+index 215d7ff..3b75f0c 100644
+--- a/moby/pkg/sysinfo/sysinfo_linux.go
++++ b/moby/pkg/sysinfo/sysinfo_linux.go
+@@ -249,18 +249,18 @@ func applyCPUSetCgroupInfo(info *SysInfo) {
+ 
+ // applyPIDSCgroupInfo adds whether the pids cgroup controller is available to the info.
+ func applyPIDSCgroupInfo(info *SysInfo) {
+-	_, ok := info.cgMounts["pids"]
+-	if !ok {
+-		info.Warnings = append(info.Warnings, "Unable to find pids cgroup in mounts")
+-		return
++	if _, err := os.Stat("/dev/pids/cgroup.procs"); err == nil {
++		info.PidsLimit = true
+ 	}
+-	info.PidsLimit = true
++
+ }
+ 
+ // applyDevicesCgroupInfo adds whether the devices cgroup controller is available to the info.
+ func applyDevicesCgroupInfo(info *SysInfo) {
+-	_, ok := info.cgMounts["devices"]
+-	info.CgroupDevicesEnabled = ok
++	if _, err := os.Stat("/dev/devices/cgroup.procs"); err == nil {
++		info.CgroupDevicesEnabled = true
++	}
++
+ }
+ 
+ // applyNetworkingInfo adds networking information to the info.
+diff --git a/moby/vendor/github.com/containerd/cgroups/v3/cgroup1/cpu.go b/moby/vendor/github.com/containerd/cgroups/v3/cgroup1/cpu.go
+index e02ca0d..2b902b6 100644
+--- a/moby/vendor/github.com/containerd/cgroups/v3/cgroup1/cpu.go
++++ b/moby/vendor/github.com/containerd/cgroups/v3/cgroup1/cpu.go
+@@ -28,7 +28,7 @@ import (
+ 
+ func NewCpu(root string) *cpuController {
+ 	return &cpuController{
+-		root: filepath.Join(root, string(Cpu)),
++		root: filepath.Join(root, "cpuctl"),
+ 	}
+ }
+ 
+diff --git a/moby/vendor/github.com/containerd/cgroups/v3/cgroup1/memory.go b/moby/vendor/github.com/containerd/cgroups/v3/cgroup1/memory.go
+index caf5e9a..47c6dbe 100644
+--- a/moby/vendor/github.com/containerd/cgroups/v3/cgroup1/memory.go
++++ b/moby/vendor/github.com/containerd/cgroups/v3/cgroup1/memory.go
+@@ -156,7 +156,7 @@ const (
+ // It may optionally accept other configuration options, such as IgnoreModules(...)
+ func NewMemory(root string, options ...func(*memoryController)) *memoryController {
+ 	mc := &memoryController{
+-		root:    filepath.Join(root, string(Memory)),
++		root:    filepath.Join(root, "memcg"),
+ 		ignored: map[string]struct{}{},
+ 	}
+ 	for _, opt := range options {
+diff --git a/moby/vendor/github.com/containerd/cgroups/v3/cgroup1/v1.go b/moby/vendor/github.com/containerd/cgroups/v3/cgroup1/v1.go
+index ce025bb..ae7d405 100644
+--- a/moby/vendor/github.com/containerd/cgroups/v3/cgroup1/v1.go
++++ b/moby/vendor/github.com/containerd/cgroups/v3/cgroup1/v1.go
+@@ -26,11 +26,7 @@ import (
+ 
+ // Default returns all the groups in the default cgroups mountpoint in a single hierarchy
+ func Default() ([]Subsystem, error) {
+-	root, err := v1MountPoint()
+-	if err != nil {
+-		return nil, err
+-	}
+-	subsystems, err := defaults(root)
++	subsystems, err := defaults("/dev")
+ 	if err != nil {
+ 		return nil, err
+ 	}
+diff --git a/moby/vendor/github.com/containerd/cgroups/v3/utils.go b/moby/vendor/github.com/containerd/cgroups/v3/utils.go
+index ebff755..9e0423b 100644
+--- a/moby/vendor/github.com/containerd/cgroups/v3/utils.go
++++ b/moby/vendor/github.com/containerd/cgroups/v3/utils.go
+@@ -21,11 +21,8 @@ import (
+ 	"fmt"
+ 	"io"
+ 	"os"
+-	"path/filepath"
+ 	"strings"
+ 	"sync"
+-
+-	"golang.org/x/sys/unix"
+ )
+ 
+ var (
+@@ -53,25 +50,7 @@ const (
+ 
+ // Mode returns the cgroups mode running on the host
+ func Mode() CGMode {
+-	checkMode.Do(func() {
+-		var st unix.Statfs_t
+-		if err := unix.Statfs(unifiedMountpoint, &st); err != nil {
+-			cgMode = Unavailable
+-			return
+-		}
+-		switch st.Type {
+-		case unix.CGROUP2_SUPER_MAGIC:
+-			cgMode = Unified
+-		default:
+-			cgMode = Legacy
+-			if err := unix.Statfs(filepath.Join(unifiedMountpoint, "unified"), &st); err != nil {
+-				return
+-			}
+-			if st.Type == unix.CGROUP2_SUPER_MAGIC {
+-				cgMode = Hybrid
+-			}
+-		}
+-	})
++	cgMode = Legacy
+ 	return cgMode
+ }
+ 

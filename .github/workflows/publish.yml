@@ -29,7 +29,8 @@ jobs:
         cd termux-packages
         sed -i 's/TERMUX_PKG_VERSION=1:/TERMUX_PKG_VERSION=/' ./root-packages/docker/build.sh
         sed -i 's/${TERMUX_PKG_VERSION:2}/${TERMUX_PKG_VERSION}/g' ./root-packages/docker/build.sh
-        patch -p1 < ../docker.patch
+        patch -p1 < $GITHUB_WORKSPACE/patches/docker.patch
+        cp $GITHUB_WORKSPACE/patches/cgroup.go.patch root-packages/docker/cgroup.go.patch
         ./scripts/run-docker.sh ./build-package.sh -i --format pacman docker docker-compose
         cd output
         bash $GITHUB_WORKSPACE/package_docker.sh
