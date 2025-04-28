@@ -1,0 +1,45 @@
+diff --git a/libcontainer/cgroups/utils.go b/libcontainer/cgroups/utils.go
+index d404647..1f90483 100644
+--- a/libcontainer/cgroups/utils.go
++++ b/libcontainer/cgroups/utils.go
+@@ -12,7 +12,6 @@ import (
+ 	"sync"
+ 	"time"
+ 
+-	"github.com/moby/sys/userns"
+ 	"github.com/sirupsen/logrus"
+ 	"golang.org/x/sys/unix"
+ )
+@@ -24,29 +23,13 @@ const (
+ )
+ 
+ var (
+-	isUnifiedOnce sync.Once
+-	isUnified     bool
+-	isHybridOnce  sync.Once
+-	isHybrid      bool
++	isHybridOnce sync.Once
++	isHybrid     bool
+ )
+ 
+ // IsCgroup2UnifiedMode returns whether we are running in cgroup v2 unified mode.
+ func IsCgroup2UnifiedMode() bool {
+-	isUnifiedOnce.Do(func() {
+-		var st unix.Statfs_t
+-		err := unix.Statfs(unifiedMountpoint, &st)
+-		if err != nil {
+-			level := logrus.WarnLevel
+-			if os.IsNotExist(err) && userns.RunningInUserNS() {
+-				// For rootless containers, sweep it under the rug.
+-				level = logrus.DebugLevel
+-			}
+-			logrus.StandardLogger().Logf(level,
+-				"statfs %s: %v; assuming cgroup v1", unifiedMountpoint, err)
+-		}
+-		isUnified = st.Type == unix.CGROUP2_SUPER_MAGIC
+-	})
+-	return isUnified
++	return false
+ }
+ 
+ // IsCgroup2HybridMode returns whether we are running in cgroup v2 hybrid mode.
