@@ -37,7 +37,7 @@ jobs:
         ./scripts/run-docker.sh ./build-package.sh -i --format pacman docker docker-compose
         cd output
         #bash $GITHUB_WORKSPACE/package_docker.sh
-        tar -czvf docker.tar.xz .
+        mkdir ./docker && mv *.xz ./docker && tar -czvf docker.tar.xz docker
         mv docker.tar.xz $GITHUB_WORKSPACE/module/docker.tar.xz
     
     - name: Update module.prop
