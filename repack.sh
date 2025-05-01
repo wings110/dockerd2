@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define the directory
-DIRECTORY="$GITHUB_WORKSPACE/termux-packages/out"
+DIRECTORY="$GITHUB_WORKSPACE/termux-packages/output"
 
 cd $DIRECTORY
 
