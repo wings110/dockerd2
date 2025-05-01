@@ -28,6 +28,7 @@ jobs:
     - name: Build Docker
       run: |
         cd termux-packages
+        rm root-packages/containerd/too_long_path.patch
         sed -i 's/TERMUX_PKG_VERSION=1:/TERMUX_PKG_VERSION=/' ./root-packages/docker/build.sh
         sed -i 's/${TERMUX_PKG_VERSION:2}/${TERMUX_PKG_VERSION}/g' ./root-packages/docker/build.sh
         patch -p1 < $GITHUB_WORKSPACE/patches/docker.patch
