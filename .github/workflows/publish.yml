@@ -39,7 +39,6 @@ jobs:
         #bash $GITHUB_WORKSPACE/package_docker.sh
         sudo chmod +x $GITHUB_WORKSPACE/*.sh
         bash $GITHUB_WORKSPACE/repack.sh
-        #mkdir ./docker && mv *.xz ./docker && tar -czvf docker.tar.xz docker
         mv data.tar.xz $GITHUB_WORKSPACE/module/data.tar.xz
     
     - name: Update module.prop
