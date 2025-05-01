@@ -36,7 +36,8 @@ jobs:
         #cp $GITHUB_WORKSPACE/patches/cgroups2.disable.patch root-packages/runc/cgroups2.disable.patch
         ./scripts/run-docker.sh ./build-package.sh -i --format pacman docker docker-compose
         cd output
-        bash $GITHUB_WORKSPACE/package_docker.sh
+        #bash $GITHUB_WORKSPACE/package_docker.sh
+        tar -czvf docker.tar.xz .
         mv docker.tar.xz $GITHUB_WORKSPACE/module/docker.tar.xz
     
     - name: Update module.prop
