@@ -43,28 +43,9 @@ jobs:
         bash $GITHUB_WORKSPACE/repack.sh
         mv data.tar.xz $GITHUB_WORKSPACE/module/data.tar.xz
     
-    - name: Update module.prop
-      run: |
-        TAG="${{ github.ref_name }}"
-        VERSION=${TAG#v}
-        sed -i "s/^version=.*/version=${VERSION}/" $GITHUB_WORKSPACE/module/module.prop
-
-    - name: Create Module
-      run: |
-        cd module
-        zip -9 -r "$GITHUB_WORKSPACE/Magisk-Dockerd-${{ github.ref_name }}.zip" ./
-
-    - name: Create Release
-      id: create_release
-      uses: softprops/action-gh-release@v2
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
+    - name: Upload package 
+      uses: actions/upload-artifact@v4
       with:
-        append_body: true
-        generate_release_notes: true
-        make_latest: ${{ github.ref_name }} !=  main
-        files: |
-          ./Magisk-Dockerd-${{ github.ref_name }}.zip
-        name: ${{ github.ref_name }}
-        tag_name: ${{ github.ref_name }}
-
+        name: package
+        path: $GITHUB_WORKSPACE/module/data.tar.xz
