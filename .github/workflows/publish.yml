@@ -34,9 +34,10 @@ jobs:
         ./scripts/run-docker.sh ./build-package.sh -i --format debian docker docker-compose docker-buildx
         
         cd output
+        tar -czvf data.tar.xz .
         #bash $GITHUB_WORKSPACE/package_docker.sh
-        sudo chmod +x $GITHUB_WORKSPACE/*.sh
-        bash $GITHUB_WORKSPACE/repack.sh
+        #sudo chmod +x $GITHUB_WORKSPACE/*.sh
+        #bash $GITHUB_WORKSPACE/repack.sh
         mv data.tar.xz $GITHUB_WORKSPACE/module/data.tar.xz
     
   
