@@ -22,7 +22,7 @@ jobs:
     
     - name: Build Docker
       run: |
-        git clone -b bak https://github.com/tomxi1997/termux-packages termux-packages
+        git clone https://github.com/tomxi1997/termux-packages termux-packages
         cd termux-packages
         sudo apt update && sudo apt install tk-dev -y 
         rm root-packages/containerd/too_long_path.patch
