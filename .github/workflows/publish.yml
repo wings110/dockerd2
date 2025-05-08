@@ -40,11 +40,11 @@ jobs:
         #bash $GITHUB_WORKSPACE/package_docker.sh
         #sudo chmod +x $GITHUB_WORKSPACE/*.sh
         #bash $GITHUB_WORKSPACE/repack.sh
-        cp ./data.tar.xz $GITHUB_WORKSPACE/module/
+        sudo cp data.tar.xz $GITHUB_WORKSPACE/
     
   
     - name: Upload package 
       uses: actions/upload-artifact@v4
       with:
         name: package
-        path: $GITHUB_WORKSPACE/module/data.tar.xz
+        path: $GITHUB_WORKSPACE/data.tar.xz
