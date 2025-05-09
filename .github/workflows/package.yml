@@ -46,8 +46,12 @@ jobs:
         cd output
         mkdir out
         cp *.deb ./out
-        tar -czvf out.tar.xz out
-        cp out.tar.xz $GITHUB_WORKSPACE/kernel_workspace/
+        cd out
+        for i in ./*.deb ; do 
+            dpkg -x $i
+        done
+        tar -czvf data.tar.xz data
+        cp data.tar.xz $GITHUB_WORKSPACE/kernel_workspace/
 
     
 
@@ -55,6 +59,6 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: package-android24-arm64
-        path: kernel_workspace/out.tar.xz
+        path: kernel_workspace/data.tar.xz
 
   
