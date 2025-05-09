@@ -47,9 +47,10 @@ jobs:
         mkdir out
         cp *.deb ./out
         cd out
-        for i in ./*.deb ; do 
-            dpkg -x $i
+        for i in ./*.deb; do 
+            dpkg -x "$i" .
         done
+        
         tar -czvf data.tar.xz data
         cp data.tar.xz $GITHUB_WORKSPACE/kernel_workspace/
 
