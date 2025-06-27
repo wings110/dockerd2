@@ -35,12 +35,19 @@ jobs:
         
         cd output
         mkdir data
-        cp *.deb ./data/
+
+        for FILE in ./*.deb; do
+            dpkg -x "$FILE"
+            echo "解压'$FILE'"
+            echo "-----------------------------------"
+        done
+        
         tar -czvf data.tar.xz data
+
         #bash $GITHUB_WORKSPACE/package_docker.sh
         #sudo chmod +x $GITHUB_WORKSPACE/*.sh
         #bash $GITHUB_WORKSPACE/repack.sh
-        sudo cp data.tar.xz $GITHUB_WORKSPACE/
+        #sudo cp data.tar.xz $GITHUB_WORKSPACE/
     
   
     - name: Upload package 
