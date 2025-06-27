@@ -47,4 +47,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: package
-        path: $GITHUB_WORKSPACE/data.tar.xz
+        path: termux-packages/output/data.tar.xz
