@@ -5,53 +5,56 @@ on:
     tags:
       - "*"
   workflow_dispatch:
-  
+
 permissions:
   contents: write
-  
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      # Checkout 主仓库
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    
-    
-    - name: Build Docker
-      run: |
-        git clone https://github.com/tomxi1997/termux-packages termux-packages
-        cd termux-packages
-        sudo apt update && sudo apt install tk-dev -y 
-        rm root-packages/containerd/too_long_path.patch
-        sed -i 's/TERMUX_PKG_VERSION=1:/TERMUX_PKG_VERSION=/' ./root-packages/docker/build.sh
-        sed -i 's/${TERMUX_PKG_VERSION:2}/${TERMUX_PKG_VERSION}/g' ./root-packages/docker/build.sh
-        patch -p1 < $GITHUB_WORKSPACE/patches/docker.patch
-        #cp $GITHUB_WORKSPACE/patches/cgroup.go.patch root-packages/docker/cgroup.go.patch
-        #cp $GITHUB_WORKSPACE/patches/cgroups2.disable.patch root-packages/runc/cgroups2.disable.patch
-        ./scripts/run-docker.sh ./build-package.sh -i --format debian docker docker-compose docker-buildx
-        
-        cd output
-        mkdir data
+      # 构建 Docker 包
+      - name: Build Docker
+        run: |
+          git clone --depth=0 https://github.com/tomxi1997/termux-packages termux-packages
+          cd termux-packages
 
-        for FILE in ./*.deb; do
-            dpkg -x "$FILE"
-            echo "解压'$FILE'"
-            echo "-----------------------------------"
-        done
-        
-        tar -czvf data.tar.xz data
+          # 安装依赖
+          sudo apt update && sudo apt install -y tk-dev meson ninja-build pkg-config golang
 
-        #bash $GITHUB_WORKSPACE/package_docker.sh
-        #sudo chmod +x $GITHUB_WORKSPACE/*.sh
-        #bash $GITHUB_WORKSPACE/repack.sh
-        #sudo cp data.tar.xz $GITHUB_WORKSPACE/
-    
-  
-    - name: Upload package 
-      uses: actions/upload-artifact@v4
-      with:
-        name: package
-        path: termux-packages/output/data.tar.xz
+          # 删除存在的 patch
+          [ -f root-packages/containerd/too_long_path.patch ] && rm root-packages/containerd/too_long_path.patch
+
+          # 修改 docker build.sh 脚本
+          sed -i 's/TERMUX_PKG_VERSION=1:/TERMUX_PKG_VERSION=/' ./root-packages/docker/build.sh
+          sed -i 's/${TERMUX_PKG_VERSION:2}/${TERMUX_PKG_VERSION}/g' ./root-packages/docker/build.sh
+
+          # 应用自定义 patch
+          patch -p1 < $GITHUB_WORKSPACE/patches/docker.patch
+
+          # 构建 docker 包
+          ./scripts/run-docker.sh ./build-package.sh -i --format debian docker docker-compose docker-buildx
+
+          # 解压 deb 包并打包
+          cd output
+          rm -rf data
+          mkdir data
+          for FILE in ./*.deb; do
+              dpkg -x "$FILE" data/
+              echo "解压 '$FILE'"
+          done
+
+          tar -cJvf data.tar.xz data
+
+      # 上传 artifact
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: package
+          path: termux-packages/output/data.tar.xz
