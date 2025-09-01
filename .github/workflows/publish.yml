@@ -22,7 +22,8 @@ jobs:
       # 构建 Docker 包
       - name: Build Docker
         run: |
-          git clone --depth=0 https://github.com/tomxi1997/termux-packages termux-packages
+          # 完整 clone Termux 仓库
+          git clone https://github.com/tomxi1997/termux-packages termux-packages
           cd termux-packages
 
           # 安装依赖
