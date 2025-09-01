@@ -32,6 +32,9 @@ jobs:
           # 删除存在的 patch
           [ -f root-packages/containerd/too_long_path.patch ] && rm root-packages/containerd/too_long_path.patch
 
+          # 修复 lxc5 / lxc 依赖注释问题
+          find root-packages -type f -name "build.sh" -exec sed -i 's|\(TERMUX_PKG_DEPENDS=.*\)#.*|\1|' {} \;
+
           # 修改 docker build.sh 脚本
           sed -i 's/TERMUX_PKG_VERSION=1:/TERMUX_PKG_VERSION=/' ./root-packages/docker/build.sh
           sed -i 's/${TERMUX_PKG_VERSION:2}/${TERMUX_PKG_VERSION}/g' ./root-packages/docker/build.sh
